@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health & Fitness Tracker (Dark UI)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(180deg, #172554 0%, #000000 100%);
+            color: #d1d5db; /* gray-300 */
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #1f2937; /* gray-800 */
+            color: #d1d5db; /* gray-300 */
+            margin: auto;
+            padding: 24px;
+            border: 1px solid #374151; /* gray-700 */
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .modal.flex {
+            display: flex;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border-left-color: #FF6B6B;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .card {
+            background-color: rgba(31, 41, 55, 0.5); /* gray-800 with transparency */
+            border: 1px solid rgba(55, 65, 81, 0.5); /* gray-700 with transparency */
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .card.interactive:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(75, 85, 99, 0.7);
+        }
+        .action-button {
+            color: white;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .action-button:hover {
+            transform: scale(1.05);
+        }
+        .btn-red {
+            background: linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%);
+            box-shadow: 0px 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        .btn-green {
+            background: linear-gradient(90deg, #2ECC71 0%, #27AE60 100%);
+            box-shadow: 0px 4px 15px rgba(46, 204, 113, 0.3);
+        }
+        .btn-purple {
+            background: linear-gradient(90deg, #8E44AD 0%, #9B59B6 100%);
+            box-shadow: 0px 4px 15px rgba(142, 68, 173, 0.3);
+        }
+        .btn-blue {
+            background: linear-gradient(90deg, #3498DB 0%, #2980B9 100%);
+            box-shadow: 0px 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        .secondary-button {
+            background-color: #374151; /* gray-700 */
+            color: #d1d5db; /* gray-300 */
+            font-weight: 500;
+             padding: 8px 16px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app-container" class="max-w-md mx-auto p-4 md:p-6">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Hi, User!</h1>
+                <p class="text-gray-400">How do you feel today?</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                 <button id="ai-coach-btn" class="text-purple-400 h-12 w-12 rounded-full bg-gray-800 flex items-center justify-center shadow-md">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                </button>
+                <button id="settings-btn" class="text-gray-400 h-12 w-12 rounded-full bg-gray-800 flex items-center justify-center shadow-md">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="space-y-6">
+
+            <!-- Today's Summary -->
+            <div class="card">
+                <h2 class="text-lg font-bold mb-4 text-white">Today's Summary</h2>
+                <div class="flex items-center gap-4">
+                    <!-- Calorie Progress -->
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-utensils text-red-400"></i>
+                            <span class="font-semibold text-gray-300">Calories</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div id="calorie-progress-bar" class="bg-red-400 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-right mt-1 text-gray-400"><span id="calories-consumed">0</span> / <span id="calorie-goal-display">2000</span> kcal</p>
+                    </div>
+                    <!-- Water Progress -->
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-tint text-blue-400"></i>
+                            <span class="font-semibold text-gray-300">Water</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div id="water-progress-bar" class="bg-blue-400 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-right mt-1 text-gray-400"><span id="water-consumed">0</span> / <span id="water-goal-display">8</span> glasses</p>
+                    </div>
+                </div>
+                 <div class="flex justify-center gap-2 mt-4">
+                     <button id="add-meal-btn" class="action-button btn-red text-xs"><i class="fas fa-plus mr-1"></i> Log Meal</button>
+                     <button id="add-water-btn" class="action-button btn-blue text-xs"><i class="fas fa-plus mr-1"></i> Log Water</button>
+                     <button id="add-workout-btn" class="action-button btn-green text-xs"><i class="fas fa-plus mr-1"></i> Log Workout</button>
+                 </div>
+            </div>
+
+            <!-- Feature Cards Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <div id="daily-logs-card" class="card interactive text-center cursor-pointer">
+                    <i class="fas fa-calendar-day text-2xl text-violet-400 mb-2"></i>
+                    <p class="font-semibold text-gray-200">Daily Logs</p>
+                </div>
+                <div id="medical-records-card" class="card interactive text-center cursor-pointer">
+                    <i class="fas fa-file-medical text-2xl text-orange-400 mb-2"></i>
+                    <p class="font-semibold text-gray-200">Medical Records</p>
+                </div>
+                <div id="ai-assistant-card" class="card interactive text-center cursor-pointer">
+                    <i class="fas fa-robot text-2xl text-blue-400 mb-2"></i>
+                    <p class="font-semibold text-gray-200">AI Assistant</p>
+                </div>
+                 <div id="emergency-card" class="card interactive text-center cursor-pointer">
+                    <i class="fas fa-first-aid text-2xl text-red-400 mb-2"></i>
+                    <p class="font-semibold text-gray-200">Emergency</p>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+
+    <!-- Modals will be appended here by JS -->
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-health-app';
+
+        // --- Initialize Firebase ---
+        let app, auth, db;
+        let userId = null;
+        let isAuthReady = false;
+        let unsubscribers = [];
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+            document.body.innerHTML = '<div class="text-center p-8 text-red-500">Failed to initialize Firebase. Please check your configuration.</div>';
+        }
+
+        // --- DOM Elements ---
+        const calorieProgressBar = document.getElementById('calorie-progress-bar');
+        const caloriesConsumedEl = document.getElementById('calories-consumed');
+        const calorieGoalDisplay = document.getElementById('calorie-goal-display');
+        const waterProgressBar = document.getElementById('water-progress-bar');
+        const waterConsumedEl = document.getElementById('water-consumed');
+        const waterGoalDisplay = document.getElementById('water-goal-display');
+        
+        // --- State ---
+        let userSettings = { calorieGoal: 2000, waterGoal: 8 };
+        let dailyData = { calories: 0, water: 0, meals: [], workouts: [] };
+        let medicalRecords = [];
+
+        // --- Authentication ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                isAuthReady = true;
+                setupListeners();
+            } else {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                         await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                         await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Error signing in:", error);
+                }
+            }
+        });
+
+        // --- Firestore Listeners ---
+        function setupListeners() {
+            if (!isAuthReady || !userId) return;
+            
+            unsubscribers.forEach(unsub => unsub());
+            unsubscribers = [];
+
+            const today = new Date().toISOString().split('T')[0];
+
+            const settingsRef = doc(db, "artifacts", appId, "users", userId);
+            unsubscribers.push(onSnapshot(settingsRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    userSettings = { ...userSettings, ...docSnap.data() };
+                } else {
+                    setDoc(settingsRef, userSettings);
+                }
+                updateAllUI();
+            }));
+
+            const mealsRef = collection(db, "artifacts", appId, "users", userId, "meals", today, "entries");
+            unsubscribers.push(onSnapshot(query(mealsRef), (snapshot) => {
+                dailyData.meals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateCalorieUI();
+            }));
+
+            const workoutsRef = collection(db, "artifacts", appId, "users", userId, "workouts", today, "entries");
+            unsubscribers.push(onSnapshot(query(workoutsRef), (snapshot) => {
+                dailyData.workouts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }));
+
+            const waterRef = doc(db, "artifacts", appId, "users", userId, "water", today);
+            unsubscribers.push(onSnapshot(waterRef, (docSnap) => {
+                dailyData.water = docSnap.exists() ? docSnap.data().glasses || 0 : 0;
+                updateWaterUI();
+            }));
+
+            const medicalRecordsRef = collection(db, "artifacts", appId, "users", userId, "medical_records");
+            unsubscribers.push(onSnapshot(query(medicalRecordsRef), (snapshot) => {
+                medicalRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }));
+        }
+        
+        // --- UI Update Functions ---
+        function updateAllUI() {
+            updateCalorieUI();
+            updateWaterUI();
+            const calorieGoalInput = document.getElementById('calorie-goal');
+            if (calorieGoalInput) calorieGoalInput.value = userSettings.calorieGoal;
+            const waterGoalInput = document.getElementById('water-goal');
+            if (waterGoalInput) waterGoalInput.value = userSettings.waterGoal;
+        }
+
+        function updateCalorieUI() {
+            const totalCalories = dailyData.meals.reduce((sum, meal) => sum + meal.calories, 0);
+            dailyData.calories = totalCalories;
+            caloriesConsumedEl.textContent = totalCalories;
+            calorieGoalDisplay.textContent = userSettings.calorieGoal;
+            const percentage = Math.min((totalCalories / userSettings.calorieGoal) * 100, 100);
+            calorieProgressBar.style.width = `${percentage}%`;
+        }
+        
+        function updateWaterUI() {
+            waterConsumedEl.textContent = dailyData.water;
+            waterGoalDisplay.textContent = userSettings.waterGoal;
+            const percentage = Math.min((dailyData.water / userSettings.waterGoal) * 100, 100);
+            waterProgressBar.style.width = `${percentage}%`;
+        }
+
+        // --- Modal Management ---
+        function createModal(id, title, content, buttons) {
+            const modal = document.createElement('div');
+            modal.id = id;
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">${title}</h2>
+                    <div class="modal-body">${content}</div>
+                    <div class="mt-6 flex justify-end space-x-3">${buttons}</div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            return modal;
+        }
+
+        function openModal(modal) { modal.classList.add('flex'); }
+        function closeModal(modal) { 
+            if (modal) {
+                modal.classList.remove('flex');
+                setTimeout(() => modal.remove(), 300);
+            }
+        }
+        
+        function showAlert(message) {
+            const content = `<p>${message}</p>`;
+            const buttons = `<button id="ok-alert-btn" class="action-button btn-red">OK</button>`;
+            const alertModal = createModal('alert-modal', 'Alert', content, buttons);
+            alertModal.querySelector('#ok-alert-btn').addEventListener('click', () => closeModal(alertModal));
+            openModal(alertModal);
+        }
+
+        function getStyledInput(id, type, placeholder, value = '') {
+            return `<input type="${type}" id="${id}" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg shadow-sm text-gray-800 focus:outline-none focus:ring-red-400 focus:border-red-400" placeholder="${placeholder}" value="${value}">`;
+        }
+        
+        function getStyledTextarea(id, placeholder) {
+            return `<textarea id="${id}" rows="3" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg shadow-sm text-gray-800 focus:outline-none focus:ring-red-400 focus:border-red-400" placeholder="${placeholder}"></textarea>`;
+        }
+
+        // --- Event Handlers ---
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            const content = `
+                <div class="space-y-4">
+                    <div>
+                        <label for="calorie-goal" class="block text-sm font-medium text-gray-700">Daily Calorie Goal (kcal)</label>
+                        ${getStyledInput('calorie-goal', 'number', 'e.g., 2000', userSettings.calorieGoal)}
+                    </div>
+                    <div>
+                        <label for="water-goal" class="block text-sm font-medium text-gray-700">Daily Water Goal (glasses)</label>
+                        ${getStyledInput('water-goal', 'number', 'e.g., 8', userSettings.waterGoal)}
+                    </div>
+                </div>`;
+            const buttons = `<button class="secondary-button">Cancel</button><button class="action-button btn-red">Save</button>`;
+            const modal = createModal('settings-modal', 'Settings', content, buttons);
+            
+            modal.querySelector('.action-button').addEventListener('click', async () => {
+                userSettings.calorieGoal = parseInt(modal.querySelector('#calorie-goal').value) || 2000;
+                userSettings.waterGoal = parseInt(modal.querySelector('#water-goal').value) || 8;
+                const settingsRef = doc(db, "artifacts", appId, "users", userId);
+                await setDoc(settingsRef, userSettings, { merge: true });
+                closeModal(modal);
+            });
+            modal.querySelector('.secondary-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+        });
+
+        document.getElementById('add-meal-btn').addEventListener('click', () => {
+            const content = `
+                <div class="space-y-4">
+                    <div>
+                        <label for="meal-name" class="block text-sm font-medium text-gray-700">Meal Name</label>
+                        ${getStyledInput('meal-name', 'text', 'e.g., Chicken Salad')}
+                    </div>
+                    <div>
+                        <label for="meal-calories" class="block text-sm font-medium text-gray-700">Calories (kcal)</label>
+                        ${getStyledInput('meal-calories', 'number', 'e.g., 350')}
+                    </div>
+                </div>`;
+            const buttons = `<button class="secondary-button">Cancel</button><button class="action-button btn-red">Add Meal</button>`;
+            const modal = createModal('add-meal-modal', 'Log a Meal', content, buttons);
+
+            modal.querySelector('.action-button').addEventListener('click', async () => {
+                const name = modal.querySelector('#meal-name').value;
+                const calories = parseInt(modal.querySelector('#meal-calories').value);
+                if (name && calories > 0) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const mealsRef = collection(db, "artifacts", appId, "users", userId, "meals", today, "entries");
+                    await addDoc(mealsRef, { name, calories, timestamp: new Date() });
+                    closeModal(modal);
+                } else {
+                    showAlert('Please enter a valid meal name and calorie amount.');
+                }
+            });
+            modal.querySelector('.secondary-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+        });
+
+        document.getElementById('add-workout-btn').addEventListener('click', () => {
+            const content = `
+                <div class="space-y-4">
+                    <div>
+                        <label for="workout-name" class="block text-sm font-medium text-gray-700">Workout Type</label>
+                        ${getStyledInput('workout-name', 'text', 'e.g., Morning Run')}
+                    </div>
+                    <div>
+                        <label for="workout-duration" class="block text-sm font-medium text-gray-700">Duration (minutes)</label>
+                        ${getStyledInput('workout-duration', 'number', 'e.g., 30')}
+                    </div>
+                </div>`;
+            const buttons = `<button class="secondary-button">Cancel</button><button class="action-button btn-green">Log Workout</button>`;
+            const modal = createModal('add-workout-modal', 'Log a Workout', content, buttons);
+
+            modal.querySelector('.action-button').addEventListener('click', async () => {
+                const name = modal.querySelector('#workout-name').value;
+                const duration = parseInt(modal.querySelector('#workout-duration').value);
+                if (name && duration > 0) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const workoutsRef = collection(db, "artifacts", appId, "users", userId, "workouts", today, "entries");
+                    await addDoc(workoutsRef, { name, duration, timestamp: new Date() });
+                    closeModal(modal);
+                } else {
+                    showAlert('Please enter a valid workout name and duration.');
+                }
+            });
+            modal.querySelector('.secondary-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+        });
+        
+        document.getElementById('add-water-btn').addEventListener('click', async () => {
+            if (!isAuthReady || !userId) return;
+            const newWaterCount = Math.max(0, dailyData.water + 1);
+            const today = new Date().toISOString().split('T')[0];
+            const waterRef = doc(db, "artifacts", appId, "users", userId, "water", today);
+            await setDoc(waterRef, { glasses: newWaterCount }, { merge: true });
+        });
+
+        // --- New Card Event Handlers ---
+        document.getElementById('daily-logs-card').addEventListener('click', () => {
+            let mealContent = '<p class="text-gray-500 text-sm">No meals logged yet.</p>';
+            if (dailyData.meals.length > 0) {
+                mealContent = dailyData.meals.map(m => `<div class="p-2 bg-gray-100 rounded-lg flex justify-between"><span><strong>${m.name}</strong></span> <span>${m.calories} kcal</span></div>`).join('');
+            }
+            let workoutContent = '<p class="text-gray-500 text-sm">No workouts logged yet.</p>';
+            if (dailyData.workouts.length > 0) {
+                workoutContent = dailyData.workouts.map(w => `<div class="p-2 bg-gray-100 rounded-lg"><strong>${w.name}</strong> - ${w.duration} mins</div>`).join('');
+            }
+            const content = `
+                <h3 class="font-bold mb-2">Meals</h3>
+                <div class="space-y-2 mb-4">${mealContent}</div>
+                <h3 class="font-bold mb-2">Workouts</h3>
+                <div class="space-y-2">${workoutContent}</div>
+            `;
+            const buttons = `<button class="action-button btn-red">Close</button>`;
+            const modal = createModal('daily-logs-modal', 'Today\'s Logs', content, buttons);
+            modal.querySelector('.action-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+        });
+
+        document.getElementById('medical-records-card').addEventListener('click', () => {
+            let recordContent = '<p class="text-gray-500 text-sm">No medical records added yet.</p>';
+            if (medicalRecords.length > 0) {
+                recordContent = medicalRecords.map(r => {
+                    const date = r.date ? new Date(r.date).toLocaleDateString() : 'No date';
+                    return `<div class="p-2 bg-gray-100 rounded-lg flex justify-between"><span><strong>${r.title}</strong></span> <span class="text-sm text-gray-600">${date}</span></div>`
+                }).join('');
+            }
+            const content = `
+                <div id="record-list" class="space-y-2">${recordContent}</div>
+                <div class="mt-4 pt-4 border-t">
+                    <h4 class="font-semibold mb-2">Add New Record</h4>
+                    <div class="space-y-2">
+                        ${getStyledInput('record-title', 'text', 'Record Title (e.g., Annual Checkup)')}
+                        ${getStyledInput('record-date', 'date', '')}
+                    </div>
+                </div>
+            `;
+            const buttons = `<button class="secondary-button">Close</button><button class="action-button btn-red">Add Record</button>`;
+            const modal = createModal('medical-records-modal', 'Medical Records', content, buttons);
+            
+            modal.querySelector('.action-button').addEventListener('click', async () => {
+                const title = modal.querySelector('#record-title').value;
+                const date = modal.querySelector('#record-date').value;
+                if(title && date) {
+                    const recordsRef = collection(db, "artifacts", appId, "users", userId, "medical_records");
+                    await addDoc(recordsRef, { title, date, createdAt: serverTimestamp() });
+                    closeModal(modal);
+                } else {
+                    showAlert('Please provide both a title and a date.');
+                }
+            });
+            modal.querySelector('.secondary-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+        });
+
+        document.getElementById('emergency-card').addEventListener('click', () => {
+            const content = `
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="p-4 bg-red-100 rounded-lg"><i class="fas fa-hospital text-red-500 text-2xl mb-1"></i><p>Hospital</p></div>
+                    <div class="p-4 bg-blue-100 rounded-lg"><i class="fas fa-ambulance text-blue-500 text-2xl mb-1"></i><p>Ambulance</p></div>
+                    <div class="p-4 bg-pink-100 rounded-lg"><i class="fas fa-tint text-pink-500 text-2xl mb-1"></i><p>Blood Bank</p></div>
+                    <div class="p-4 bg-green-100 rounded-lg"><i class="fas fa-clinic-medical text-green-500 text-2xl mb-1"></i><p>Clinic</p></div>
+                </div>`;
+            const buttons = `<button class="action-button btn-red">Close</button>`;
+            const modal = createModal('emergency-modal', 'Emergency Contacts', content, buttons);
+            modal.querySelector('.action-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+        });
+
+        document.getElementById('ai-assistant-card').addEventListener('click', () => {
+            const content = `
+                <p class="mb-4 text-gray-600">Use our AI to help you with your fitness journey.</p>
+                <div class="space-y-3">
+                    <button id="modal-ai-workout-btn" class="w-full text-left p-3 bg-green-100 rounded-lg font-semibold text-green-800 hover:bg-green-200">Get an AI Workout Plan</button>
+                    <button id="modal-ai-diet-btn" class="w-full text-left p-3 bg-purple-100 rounded-lg font-semibold text-purple-800 hover:bg-purple-200">Get an AI Diet Plan</button>
+                </div>
+            `;
+            const buttons = `<button class="action-button btn-red">Close</button>`;
+            const modal = createModal('ai-assistant-modal', 'AI Assistant', content, buttons);
+            modal.querySelector('#modal-ai-workout-btn').addEventListener('click', () => { closeModal(modal); showAiPlanner('workout'); });
+            modal.querySelector('#modal-ai-diet-btn').addEventListener('click', () => { closeModal(modal); showAiPlanner('diet'); });
+            modal.querySelector('.action-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+        });
+
+        document.getElementById('ai-coach-btn').addEventListener('click', async () => {
+            const prompt = `You are a motivating and friendly health coach. Summarize my day and give me one tip for tomorrow. Today I ate ${dailyData.calories} out of ${userSettings.calorieGoal} calories, drank ${dailyData.water} out of ${userSettings.waterGoal} glasses of water, and did ${dailyData.workouts.length} workouts.`;
+            const content = `<div id="ai-coach-result" class="p-3 bg-gray-100 rounded-lg min-h-[60px] flex items-center justify-center"><div class="spinner"></div></div>`;
+            const buttons = `<button class="action-button btn-purple">Awesome!</button>`;
+            const modal = createModal('ai-coach-modal', 'Your Daily Summary ✨', content, buttons);
+            modal.querySelector('.action-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+            
+            const summary = await callGemini(prompt);
+            modal.querySelector('#ai-coach-result').innerHTML = summary;
+        });
+
+        // --- Gemini API ---
+        async function callGemini(prompt) {
+            const apiKey = ""; // Keep this empty
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get a response.";
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                return `An error occurred: ${error.message}`;
+            }
+        }
+
+        function showAiPlanner(type) {
+            let title, placeholder, promptFn, btnClass;
+            if (type === 'workout') {
+                title = 'AI Workout Planner';
+                placeholder = 'e.g., I want to build muscle and can go to the gym 4 times a week.';
+                promptFn = (goal) => `You are a fitness coach. Create a simple workout plan for this goal: "${goal}". Format with markdown.`;
+                btnClass = 'btn-green';
+            } else { // diet
+                 title = 'AI Diet Plan';
+                 placeholder = 'e.g., A 3-day vegetarian diet plan for weight loss.';
+                 promptFn = (goal) => `You are a nutritionist. Create a diet plan for this goal: "${goal}". Format with markdown.`;
+                 btnClass = 'btn-purple';
+            }
+
+            const content = `
+                <div class="space-y-4">
+                    <div>
+                        <label for="ai-goal" class="block text-sm font-medium text-gray-700">Describe your goal:</label>
+                        ${getStyledTextarea('ai-goal', placeholder)}
+                    </div>
+                    <div id="ai-result" class="mt-4 p-3 bg-gray-100 rounded-lg" style="display: none; white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
+                </div>`;
+            const buttons = `<button class="secondary-button">Close</button><button class="action-button ${btnClass}">Get Plan</button>`;
+            const modal = createModal('ai-planner-modal', title, content, buttons);
+            
+            const resultDiv = modal.querySelector('#ai-result');
+            const getPlanBtn = modal.querySelector('.action-button');
+
+            getPlanBtn.addEventListener('click', async () => {
+                const goal = modal.querySelector('#ai-goal').value;
+                if (!goal) { showAlert("Please describe your goal."); return; }
+                
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<div class="spinner mx-auto"></div>';
+                getPlanBtn.disabled = true;
+
+                const plan = await callGemini(promptFn(goal));
+                resultDiv.innerHTML = plan;
+                getPlanBtn.disabled = false;
+            });
+
+            modal.querySelector('.secondary-button').addEventListener('click', () => closeModal(modal));
+            openModal(modal);
+        }
+    </script>
+</body>
+</html>
